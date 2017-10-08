@@ -1,0 +1,9 @@
+# Justification
+
+My research seeks to reverse the mindset that unhealthy foods are more tasty, enjoyable, and satisfying than healthy foods, and how this change of mindset influences eating behavior and physiological response to food. This paper by **Huh, Vosgerau, & Morewedge (2016)** examines people's expectations and choice behaviors among food substitutes when their desired food is unavailable. I plan to replicate Study 1, which found that people more often chose an off-brand substitute (store brand chocolate) over a cross-category substitute (granola bar) when their desired food (gourmet chocolate) was not available even though they expected it to be less enjoyable and satisfying. This finding suggests that restricting the availability of desired foods negatively influences our expectations of similar foods due to a negative contrast effect.
+
+# Stimuli & Procedures
+
+This class is my first exposure to programming in R, so I also chose this particular study because it had performed basic analyses that would allow me to analyze data and develop a good workflow in the scope of a quarter.
+Study 1 was a Qualtrics survey that recruited participants through Amazon's Mechanical Turk. They surveyed 101 participants and presented them with 10 sets of 3 foods (in text, not images). One of these foods is the desired item, followed by a within-category substitute and a cross-category substitute. The survey also includes manipulation checks to confirm that the foods in each set are indeed similar/dissimilar enough. The author also asked participants to rate how enjoyable and satisfying they expect each food substitute will be.
+The results section provides rating means and percent chosen for each substitute and performed *t tests* and *logistic regressions*.  My biggest challenge will be using R to program logistic regressions with random effects as I have never used this function.
