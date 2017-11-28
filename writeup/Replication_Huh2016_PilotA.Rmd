@@ -43,9 +43,11 @@ The original article by Huh, Vosgerau % Morewedge examines choice behavior and e
 The original article sampled 101 participants, which yielded an effect size of d = .45 with 99% power. 
 
 ### Planned Sample
-To achieve 99% power, this replication will sample 100 participants via Amazon's Mechanical Turk. Mturk participants must have an approval rating of 95% and live in the United States. Demographic variables of the original study were not reported. Although, sample size calculations show that we would only need 32 participants to meet the threshold of 80% power, this replication will sample 100 participants for two reasons:
+To achieve 99% power, this replication will sample 100 participants (age 18 and over) via Amazon's Mechanical Turk. Mturk participants must have an approval rating of 95% and live in the United States. Demographic variables of the original study were not reported. Although, sample size calculations show that we would only need 32 participants to meet the threshold of 80% power, this replication will sample 100 participants for two reasons:
 1. To match the high power of the original study.
 2. The estimated time of survey completion is only 3-4 min.
+
+Apart from the age, approval rating, and consent requirements, the authors did not list any exclusionary criteria in creating their final sample.
 
 ### Materials
 This survey was created on Qualtrics and launched on Amazon Mechanical Turk. Participants are required to complete this survey on a laptop or tablet.
@@ -68,7 +70,7 @@ Where this replication differs in analysis reporting (i.e., z scores, Wald chi s
 
 #### Importing the Data
 ```{r}
-setwd("~/Desktop/PSYCH 251 - Stats/Pilot")
+setwd("~/Desktop/PSYCH 251 - Stats/Huh2016")
 d <- read.csv("Replication_Huh2016_PilotA.csv")
 
 ```
@@ -108,7 +110,7 @@ d <- cbind(id=id, d)
 
 #### Manipulation Check (similarity rating) 
 ```{r}
-# t tests for each set of stimuli
+# t tests for each set of stimuli in wide form
 
 t.test(d$sim1, mu=4)
 t.test(d$sim2, mu=4)
@@ -121,10 +123,19 @@ t.test(d$sim8, mu=4)
 t.test(d$sim9, mu=4)
 t.test(d$sim10, mu=4)
 
+# convert to tidy data to calculate overall mean & sd
 d_tidy_sim <- d %>%
-        gather(sim, sim_rating, starts_with("sim")) %>%
-        group_by(sim) %>%
-        summarise(mean_sim = mean(sim_rating, na.rm = TRUE))
+        select(id, starts_with("sim")) %>%
+        gather(set, sim, starts_with("sim"))
+
+# cleaning the data
+d_tidy_sim$set <- gsub("sim", "", d_tidy_sim$set)
+d_tidy_sim$id <- as.numeric(d_tidy_sim$id)
+d_tidy_sim$id <- as.factor(d_tidy_sim$id)
+
+d_tidy_sim_mean <- d_tidy_sim %>%
+        group_by(set) %>%
+        summarise(mean_sim = mean(sim, na.rm = TRUE))
 
 # calculating mean & sd
 mean(d_tidy_sim$mean_sim)
@@ -141,14 +152,18 @@ sd(d_tidy_sim$mean_sim)
 d_tidy_pref <- d %>%
         select(id, starts_with("pref")) %>%
         gather(pref, pref_rating, starts_with("pref")) %>%
-        separate(pref, c("set_pref", "item"), "_") %>%
+        separate(pref, c("set", "item"), "_") %>%
         spread(item, pref_rating) %>%
         rename(within = "1",
                cross = "2",
                target = "3") 
 
-
-d_tidy_pref$set_pref <- gsub("pref", "", d_tidy_pref$set_pref)
+# cleaning the data
+d_tidy_pref$set <- gsub("pref", "", d_tidy_pref$set)
+d_tidy_pref$set <- as.numeric(d_tidy_pref$set)
+d_tidy_pref$set <- as.factor(d_tidy_pref$set)
+d_tidy_pref$id <- as.numeric(d_tidy_pref$id)
+d_tidy_pref$id <- as.factor(d_tidy_pref$id)
 
 # calculating means & sd
 mean(d_tidy_pref$within, na.rm=TRUE)
@@ -174,16 +189,21 @@ t.test(d_tidy_pref$cross, d_tidy_pref$within, paired=TRUE)
 #### Item Choice Share
 ```{r}
 
-# cleaning data. 0 = cross category, 1 = within category
+# gathering data. 0 = cross category, 1 = within category
 d_tidy_choice <- d %>%
         select(id, starts_with("sub")) %>%
         gather(set, choice, starts_with("sub"))
 
+# cleaning the data
+d_tidy_choice$set <- gsub("sub", "", d_tidy_choice$set)
 d_tidy_choice$choice <- gsub("cross category", "0", d_tidy_choice$choice)
-
 d_tidy_choice$choice <- gsub("within category", "1", d_tidy_choice$choice)
-
 d_tidy_choice$choice <- as.factor(d_tidy_choice$choice)
+d_tidy_choice$set <- as.numeric(d_tidy_choice$set)
+d_tidy_choice$set <- as.factor(d_tidy_choice$set)
+d_tidy_choice$id <- as.numeric(d_tidy_choice$id)
+d_tidy_choice$id <- as.factor(d_tidy_choice$id)
+
 
 # calculate proportions chose within-category vs. cross-category & test against 50%
 table(d_tidy_choice$choice)
@@ -201,7 +221,7 @@ This replication diverges from the original paper by not reporting a z-score. Th
 d_tidy <- d %>%
         select(id, starts_with("sub"), starts_with("pref"), starts_with("sim")) %>%
         gather(set, choice, starts_with("sub")) %>%
-        gather(sim_set, sim_rating, starts_with("sim")) %>%
+        gather(sim_set, sim, starts_with("sim")) %>%
         gather(pref, pref_rating, starts_with("pref")) %>%
         separate(pref, c("pref_set", "item"), "_") %>%
         spread(item, pref_rating) %>%
@@ -223,12 +243,27 @@ d_tidy$pref_set <- as.factor(d_tidy$pref_set)
 
 
 
+
+```
+
+
+```{r}
+
+
+d_tidy <- full_join(d_tidy_sim, d_tidy_choice, (by = NULL), copy = "FALSE")
+d_tidy <- full_join(d_tidy, d_tidy_pref, (by = NULL), copy = "FALSE")
+
 # regression of similarity and enjoyment ratings on item choice with participants as random effects
-choice_model <- glmer(d_tidy$choice ~ d_tidy$sim_rating + d_tidy$within + d_tidy$cross + (1|d_tidy$id),
+choice_model <- glmer(d_tidy$choice ~ d_tidy$sim + d_tidy$within + d_tidy$cross + (1|d_tidy$id),
              family = binomial)
 
 summary(choice_model)
 
+
 ```
-> "As a more rigorous test of whether similarity determined choices of substitutes, we regressed choices (0=cross-category substitute, 1=within-category substitute) on similarity and enjoyment ratings for the within- and cross-category substitutes in a logit model, with participants as random effects." The intercept was not significant (Beta=-0.44, SE=0.23, z=-1.922, p>0.5), indicating that there is no significant difference between choosing the within or cross category substitute.
+> "As a more rigorous test of whether similarity determined choices of substitutes, we regressed choices (0=cross-category substitute, 1=within-category substitute) on similarity and enjoyment ratings for the within- and cross-category substitutes in a logit model, with participants as random effects." The intercept was not significant (Beta=-0.50, SE=0.82, z=-0.61, p>.05), indicating that there is no significant difference between choosing the within or cross category substitute.
 This replication diverges from the original paper by not calculating a Wald chi-square statistic. I don't know how to calculate this in R with a glmer function.
+
+
+
+### Discrepancies 
