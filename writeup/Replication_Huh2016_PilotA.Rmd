@@ -79,7 +79,7 @@ d <- read.csv("Replication_Huh2016_PilotA.csv")
 ```{r}
 
 d <- d %>%
-        select((starts_with("sub")), (starts_with("pref")), (starts_with("sim")), "Gender", "Age", "Platform")
+        select((starts_with("sub")), (starts_with("pref")), (starts_with("sim")), "Gender", "Age")
 
 d$sub1 <- as.factor(d$sub1) 
 d$sub2 <- as.factor(d$sub2)
@@ -91,6 +91,7 @@ d$sub7 <- as.factor(d$sub7)
 d$sub8 <- as.factor(d$sub8)
 d$sub9 <- as.factor(d$sub9)
 d$sub10 <- as.factor(d$sub10)
+
 
 d$sub1 <- factor(d$sub1, labels = c("cross category", "within category"))
 d$sub2 <- factor(d$sub2, labels = c("cross category", "within category"))
@@ -110,8 +111,20 @@ d <- cbind(id=id, d)
 
 #### Manipulation Check (similarity rating) 
 ```{r}
-# t tests for each set of stimuli in wide form
+# cleaning the data
+d$sim1 <- as.numeric(d$sim1)
+d$sim2 <- as.numeric(d$sim2)
+d$sim3 <- as.numeric(d$sim3)
+d$sim4 <- as.numeric(d$sim4)
+d$sim5 <- as.numeric(d$sim5)
+d$sim6 <- as.numeric(d$sim6)
+d$sim7 <- as.numeric(d$sim7)
+d$sim8 <- as.numeric(d$sim8)
+d$sim9 <- as.numeric(d$sim9)
+d$sim10 <- as.numeric(d$sim10)
 
+
+# t tests for each set of stimuli in wide form
 t.test(d$sim1, mu=4)
 t.test(d$sim2, mu=4)
 t.test(d$sim3, mu=4)
@@ -196,8 +209,8 @@ d_tidy_choice <- d %>%
 
 # cleaning the data
 d_tidy_choice$set <- gsub("sub", "", d_tidy_choice$set)
-d_tidy_choice$choice <- gsub("cross category", "0", d_tidy_choice$choice)
-d_tidy_choice$choice <- gsub("within category", "1", d_tidy_choice$choice)
+d_tidy_choice$choice <- gsub("cross category", "1", d_tidy_choice$choice)
+d_tidy_choice$choice <- gsub("within category", "2", d_tidy_choice$choice)
 d_tidy_choice$choice <- as.factor(d_tidy_choice$choice)
 d_tidy_choice$set <- as.numeric(d_tidy_choice$set)
 d_tidy_choice$set <- as.factor(d_tidy_choice$set)
@@ -207,45 +220,13 @@ d_tidy_choice$id <- as.factor(d_tidy_choice$id)
 
 # calculate proportions chose within-category vs. cross-category & test against 50%
 table(d_tidy_choice$choice)
-binom.test(60, 100, 0.5, alternative="greater")
+binom.test(41, 50, 0.5, alternative="greater")
 ```
 > Overall, compared to within category substitutes, participants more often chose cross category items to satisfy their craving for the target food. 
 This replication diverges from the original paper by not reporting a z-score. The original authors reported a z score of 5.97.
 
 
-#### KEY TEST: Regression - to what extent is choice of substitutes determined by similarity & expected enjoyment?
-```{r}
-
-# cleaning the data - need help on this. Something went wrong here, as I now have 10,000 rows of data. How do I gather multiple columns together without creating more rows (i.e. merge data based on one identifying variable like "set"?
-
-d_tidy <- d %>%
-        select(id, starts_with("sub"), starts_with("pref"), starts_with("sim")) %>%
-        gather(set, choice, starts_with("sub")) %>%
-        gather(sim_set, sim, starts_with("sim")) %>%
-        gather(pref, pref_rating, starts_with("pref")) %>%
-        separate(pref, c("pref_set", "item"), "_") %>%
-        spread(item, pref_rating) %>%
-        rename(within = "1",
-               cross = "2",
-               target = "3")
-
-d_tidy$set <- gsub("sub", "", d_tidy$set)
-d_tidy$sim_set <- gsub("sim", "", d_tidy$sim_set)
-d_tidy$pref_set <- gsub("pref", "", d_tidy$pref_set)
-
-d_tidy$choice <- gsub("cross category", "0", d_tidy$choice)
-d_tidy$choice <- gsub("within category", "1", d_tidy$choice)
-
-d_tidy$set <- as.factor(d_tidy$set)
-d_tidy$choice <- as.factor(d_tidy$choice)
-d_tidy$sim_set <- as.factor(d_tidy$sim_set)
-d_tidy$pref_set <- as.factor(d_tidy$pref_set)
-
-
-
-
-```
-
+#### Regression - to what extent is choice of substitutes determined by similarity & expected enjoyment?
 
 ```{r}
 
@@ -261,9 +242,8 @@ summary(choice_model)
 
 
 ```
-> "As a more rigorous test of whether similarity determined choices of substitutes, we regressed choices (0=cross-category substitute, 1=within-category substitute) on similarity and enjoyment ratings for the within- and cross-category substitutes in a logit model, with participants as random effects." The intercept was not significant (Beta=-0.50, SE=0.82, z=-0.61, p>.05), indicating that there is no significant difference between choosing the within or cross category substitute.
-This replication diverges from the original paper by not calculating a Wald chi-square statistic. I don't know how to calculate this in R with a glmer function.
+> "As a more rigorous test of whether similarity determined choices of substitutes, we regressed choices (0=cross-category substitute, 1=within-category substitute) on similarity and enjoyment ratings for the within- and cross-category substitutes in a logit model, with participants as random effects." The intercept was not significant, indicating that there is no significant difference between choosing the within or cross category substitute.
+This replication diverges from the original paper by not calculating a Wald chi-square statistic. I don't know how to calculate this in R with a glmer function. This is a secondary analysis I will not judge the success of the replication by this st
 
 
 
-### Discrepancies 
